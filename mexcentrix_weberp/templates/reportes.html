@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Proveedores</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+</head>
+
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="card shadow-lg mx-auto" style="max-width: 600px;">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title mb-0">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Reporte de Proveedores
+                </h3>
+            </div>
+
+            <div class="card-body">
+                <form id="reportForm">
+                    <!-- Selector de dominio -->
+                    <div class="mb-4">
+                        <label for="dominio" class="form-label fw-bold">Seleccione el dominio:</label>
+                        <select id="dominio" class="form-select form-select-lg" required>
+                            <option value="">-- Seleccione un dominio --</option>
+                            {% for dominio in dominios %}
+                            <option value="{{ dominio }}">{{ dominio }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Selector de empresa -->
+                    <div class="mb-4">
+                        <label for="company" class="form-label fw-bold">Seleccione la empresa:</label>
+                        <select id="company" class="form-select form-select-lg" disabled required>
+                            <option value="">-- Primero seleccione un dominio --</option>
+                        </select>
+                    </div>
+
+                    <!-- Selector de período -->
+                    <div class="mb-4">
+                        <label for="fecha" class="form-label fw-bold">Seleccionar período:</label>
+                        <input type="month" id="fecha" class="form-control form-control-lg" disabled required>
+                        <div class="form-text">Selecciona el mes y año para el reporte</div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="button" id="descargar" class="btn btn-success btn-lg" disabled>
+                            <i class="bi bi-download me-2"></i>Generar Reporte
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast para mensajes -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto">
+                    <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Error
+                </strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body"></div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        let periodos = {};
+        let dominioActual = '';
+        let empresaActual = '';
+        const dominios = {};
+
+        const selectDominio = document.getElementById("dominio");
+        const selectCompany = document.getElementById("company");
+        const inputFecha = document.getElementById("fecha");
+        const botonDescargar = document.getElementById("descargar");
+        const toastEl = document.getElementById('liveToast');
+        const toast = new bootstrap.Toast(toastEl);
+
+        // Carga estructura de dominios al iniciar
+        fetch('/mexcentrix/api/dominios/')
+            .then(response => response.json())
+            .then(data => {
+                Object.assign(dominios, data);
+                selectDominio.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error cargando dominios:', error);
+                mostrarError("Error al cargar lista de dominios");
+            });
+
+        // Event listeners
+        selectDominio.addEventListener('change', async (e) => {
+            dominioActual = e.target.value;
+            resetearFormulario();
+            await cargarEmpresas(dominioActual);
+            selectCompany.disabled = false;
+        });
+
+        selectCompany.addEventListener('change', async (e) => {
+            empresaActual = e.target.value;
+            await cargarPeriodos(empresaActual);
+            inputFecha.disabled = false;
+        });
+
+        inputFecha.addEventListener("change", actualizarBoton);
+        botonDescargar.addEventListener("click", descargarReporte);
+
+        async function cargarEmpresas(dominio) {
+            try {
+                const response = await fetch(`/mexcentrix/api/empresas/?dominio=${dominio}`);
+                if (!response.ok) throw new Error('Error en la respuesta');
+
+                const empresas = await response.json();
+
+                selectCompany.innerHTML = '<option value="">-- Seleccione una empresa --</option>';
+
+                // Iterar correctamente sobre las propiedades del objeto
+                for (const [codigoEmpresa, nombreEmpresa] of Object.entries(empresas)) {
+                    const option = document.createElement('option');
+                    option.value = codigoEmpresa;  // Valor real para el backend
+                    option.textContent = nombreEmpresa;  // Nombre visible para el usuario
+                    selectCompany.appendChild(option);
+                }
+
+                // seleccionar primera empresa por defecto
+                if (selectCompany.options.length > 1) {
+                    selectCompany.value = selectCompany.options[1].value;
+                }
+
+            } catch (error) {
+                console.error(error);
+                mostrarError("Error al cargar empresas del dominio");
+                resetearFormulario();
+            }
+        }
+
+        async function cargarPeriodos(empresa) {
+            try {
+                const response = await fetch(`/mexcentrix/api/periodos/?company=${empresa}&dominio=${dominioActual}`);
+                if (!response.ok) throw new Error('Error al cargar períodos');
+
+                const data = await response.json();
+                periodos = data.periodos;
+
+                // Actualizar input de fecha
+                inputFecha.value = Object.keys(periodos)[0] || '';
+                actualizarBoton();
+
+            } catch (error) {
+                console.error(error);
+                mostrarError("Error al cargar períodos de la empresa");
+                inputFecha.disabled = true;
+                botonDescargar.disabled = true;
+            }
+        }
+
+        function resetearFormulario() {
+            selectCompany.innerHTML = '<option value="">-- Seleccione una empresa --</option>';
+            inputFecha.value = '';
+            inputFecha.disabled = true;
+            botonDescargar.disabled = true;
+            periodos = {};
+            empresaActual = '';
+        }
+
+        function actualizarBoton() {
+            const periodoValido = periodos[inputFecha.value];
+            botonDescargar.disabled = !periodoValido;
+        }
+
+        async function descargarReporte() {
+            const periodo = periodos[inputFecha.value];
+            if (!periodo) return mostrarError("Período no válido");
+
+            const btnOriginal = botonDescargar.innerHTML;
+
+            // Estado de carga
+            botonDescargar.innerHTML = `
+                <span class="spinner-border spinner-border-sm" role="status"></span>
+                Generando reporte...
+            `;
+            botonDescargar.disabled = true;
+
+            try {
+                const response = await fetch(
+                    `/mexcentrix/descargar_excel/?periodo=${periodo}&company=${empresaActual}&dominio=${dominioActual}`
+                );
+
+                if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Reporte_${dominioActual}_${empresaActual}_${inputFecha.value}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+
+            } catch (error) {
+                console.error(error);
+                mostrarError(error.message || "Error al generar el reporte");
+            } finally {
+                botonDescargar.innerHTML = btnOriginal;
+                botonDescargar.disabled = false;
+            }
+        }
+
+        function mostrarError(mensaje) {
+            const toastBody = toastEl.querySelector('.toast-body');
+            toastBody.textContent = mensaje;
+            toast.show();
+        }
+    </script>
+</body>
+
+</html>

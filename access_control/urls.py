@@ -20,4 +20,5 @@ from django.urls import include, path
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('mi_aplicacion.urls')),
+    path('mexcentrix/', include('mexcentrix_weberp.urls')),
 ]

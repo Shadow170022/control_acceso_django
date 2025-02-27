@@ -1,0 +1,56 @@
+/* Styles for Employee List */
+
+/* Hover effect to highlight rows */
+tr:hover {
+    background-color: #f1f1f1;
+    transition: background-color 0.3s ease;
+}
+
+/* Styles for employees with check-in or check-out issues */
+.warning {
+    background-color: #ffefba; /* Soft warning color */
+}
+
+/* Icon styles */
+.icon {
+    font-size: 1.2rem;
+    margin-left: 5px;
+    color: red;
+}
+
+/* Smooth transition for searching a new date */
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Effect on search button */
+.btn-primary:hover {
+    background-color: #0056b3;
+    transition: background-color 0.3s ease;
+}
+
+/* Icons for ascending and descending order */
+.sort-icon {
+    cursor: pointer;
+}
+
+.ascending:after {
+    content: "▲";
+    font-size: 0.6em;
+    margin-left: 5px;
+}
+
+.descending:after {
+    content: "▼";
+    font-size: 0.6em;
+    margin-left: 5px;
+}
