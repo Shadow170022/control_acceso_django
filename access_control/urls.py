@@ -21,4 +21,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('mi_aplicacion.urls')),
     path('mexcentrix/', include('mexcentrix_weberp.urls')),
+    path('g4/', include('g4br13l.urls')),
 ]
