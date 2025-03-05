@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat con DeepSeek</title>
+    <style>
+        .chat-container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+        }
+        .messages {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="messages" id="messages"></div>
+        <form id="chat-form">
+            {% csrf_token %}
+            <input type="text" name="message" placeholder="Escribe tu mensaje..." style="width: 80%">
+            <button type="submit">Enviar</button>
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById('chat-form');
+        const messagesDiv = document.getElementById('messages');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            
+            // Mostrar mensaje del usuario
+            messagesDiv.innerHTML += `<div><strong>Tú:</strong> ${formData.get('message')}</div>`;
+            
+            try {
+                const response = await fetch('/g4/chat/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if(data.response) {
+                    messagesDiv.innerHTML += `<div><strong>Asistente:</strong> ${data.response}</div>`;
+                } else if(data.error) {
+                    messagesDiv.innerHTML += `<div style="color: red">Error: ${data.error}</div>`;
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+            }
+            
+            form.reset();
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+    </script>
+</body>
+</html>
