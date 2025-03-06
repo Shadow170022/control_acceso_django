@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'mi_aplicacion',
     'mexcentrix_weberp',
+    'g4br13l',
 ]
 
 MIDDLEWARE = [
@@ -137,6 +138,9 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+CSRF_TRUSTED_ORIGINS = [
+    "http://192.168.15.242:8000",
+]
 
 logging.basicConfig(
     level=logging.DEBUG,
