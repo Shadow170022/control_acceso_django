@@ -2,33 +2,34 @@ from django.shortcuts import render
 from django.db.models import Q, Min, Max
 from .models import Empleado
 from datetime import date, datetime, timedelta
+from django.contrib.auth import authenticate, login, logout
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import permission_required
+from django.shortcuts import redirect
+from django.conf import settings
 
-def lista_empleados(request):
-    """View to list employees and calculate their working hours for the current day."""
-    today = date.today()
-
-    # Group by employee and get the first and last authentication record of the day
-    empleados = Empleado.objects.filter(auth_date=today).values('user_name', 'id_empleado').annotate(
-        first_checkin=Min('auth_time'),
-        last_checkout=Max('auth_time')
-    )
-
-    # Calculate working hours if both check-in and check-out times exist
-    for empleado in empleados:
-        checkin = empleado['first_checkin']
-        checkout = empleado['last_checkout']
-
-        if checkin and checkout:
-            checkin_datetime = datetime.combine(today, checkin)
-            checkout_datetime = datetime.combine(today, checkout)
-            horas_trabajadas = (checkout_datetime - checkin_datetime).total_seconds() / 3600  # Convert to hours
-            empleado['horas_trabajadas'] = round(horas_trabajadas, 2)
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            login(request, user)
+            next_url = request.GET.get('next', '/rh/empleados_por_fecha/')  # permite la captura el parámetro 'next'
+            return redirect(next_url)
         else:
-            empleado['horas_trabajadas'] = "N/A"
+            messages.error(request, 'Credenciales inválidas')
+    return render(request, 'rh_login.html')
 
-    return render(request, 'empleados.html', {'empleados': empleados, 'today': today})
+def logout_view(request):
+    logout(request)
+    return redirect('login')
 
-
+@login_required(login_url='/rh/login/')
+@permission_required('mi_aplicacion.is_rh', login_url='/rh/login/', raise_exception=True)
 def empleados_por_fecha(request):
     """View to filter employees by name and/or date range and group their working hours."""
     nombre = request.GET.get('nombre', '').strip()
@@ -133,3 +134,29 @@ def empleados_por_fecha(request):
         'auth_data': auth_data if agrupar_total else None,
         'total_horas_trabajadas': total_horas_trabajadas if agrupar_total else None
     })
+
+
+def lista_empleados(request):
+    """View to list employees and calculate their working hours for the current day."""
+    today = date.today()
+
+    # Group by employee and get the first and last authentication record of the day
+    empleados = Empleado.objects.filter(auth_date=today).values('user_name', 'id_empleado').annotate(
+        first_checkin=Min('auth_time'),
+        last_checkout=Max('auth_time')
+    )
+
+    # Calculate working hours if both check-in and check-out times exist
+    for empleado in empleados:
+        checkin = empleado['first_checkin']
+        checkout = empleado['last_checkout']
+
+        if checkin and checkout:
+            checkin_datetime = datetime.combine(today, checkin)
+            checkout_datetime = datetime.combine(today, checkout)
+            horas_trabajadas = (checkout_datetime - checkin_datetime).total_seconds() / 3600  # Convert to hours
+            empleado['horas_trabajadas'] = round(horas_trabajadas, 2)
+        else:
+            empleado['horas_trabajadas'] = "N/A"
+
+    return render(request, 'empleados.html', {'empleados': empleados, 'today': today})

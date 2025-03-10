@@ -2,31 +2,33 @@ import pymysql
 import openpyxl
 import datetime
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from mexcentrix_weberp.utils.db_utils import get_company_connection, get_domain_companies
+from django.contrib.auth import authenticate, login, logout
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import permission_required
 
-def get_domain_companies_serializable():
-    dominios = get_domain_companies()  # diccionario completo
-    serializable = {}
-    for dominio, data in dominios.items():
-        serializable[dominio] = {"companies": data.get("companies", {})}
-    return serializable
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            login(request, user)
+            return redirect('reportes')
+        else:
+            messages.error(request, 'Credenciales inválidas')
+    return render(request, 'login.html')
 
-def api_dominios(request):
-    """Endpoint para obtener la estructura de dominios y empresas sin las funciones."""
-    dominios = get_domain_companies_serializable()
-    return JsonResponse(dominios)
+def logout_view(request):
+    logout(request)
+    return redirect('login')
 
-def api_empresas(request):
-    """Endpoint para obtener empresas de un dominio específico"""
-    dominio = request.GET.get('dominio')
-    dominios = get_domain_companies_serializable()
-    print(dominios)
-    print("El dominio es:", dominio)
-    empresas = dominios.get(dominio, {}).get('companies', {})
-    print("Las empresas son:", empresas)
-    return JsonResponse(empresas)
-
+@login_required
+@permission_required('mi_aplicacion.is_finance', login_url='/login/', raise_exception=True)
 def reportes(request):
     """ Obtiene los períodos disponibles y selecciona el actual """
     company_name = request.GET.get('company', 'mxcxit_rsserp')
@@ -80,6 +82,8 @@ def api_periodos(request):
         'empresa': company_name
     })
 
+@login_required
+@permission_required('mi_aplicacion.is_finance', login_url='/login/', raise_exception=True)
 def descargar_excel(request):
     """ Genera el reporte de facturas en Excel filtrado por el período seleccionado """
     company_name = request.GET.get('company', 'mxcxit_rsserp')
@@ -144,3 +148,27 @@ def descargar_excel(request):
     wb.save(response)
 
     return response
+
+
+
+def get_domain_companies_serializable():
+    dominios = get_domain_companies()  # diccionario completo
+    serializable = {}
+    for dominio, data in dominios.items():
+        serializable[dominio] = {"companies": data.get("companies", {})}
+    return serializable
+
+def api_dominios(request):
+    """Endpoint para obtener la estructura de dominios y empresas sin las funciones."""
+    dominios = get_domain_companies_serializable()
+    return JsonResponse(dominios)
+
+def api_empresas(request):
+    """Endpoint para obtener empresas de un dominio específico"""
+    dominio = request.GET.get('dominio')
+    dominios = get_domain_companies_serializable()
+    print(dominios)
+    print("El dominio es:", dominio)
+    empresas = dominios.get(dominio, {}).get('companies', {})
+    print("Las empresas son:", empresas)
+    return JsonResponse(empresas)

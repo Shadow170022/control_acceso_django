@@ -28,10 +28,15 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['192.168.15.242', '192.168.15.0/24']
 
+LOGIN_URL = '/mexcentrix/login/'
+LOGIN_RH_URL = '/rh/login/'
+LOGOUT_REDIRECT_URL = 'login'      # Redirección después de logout
+
 
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -41,7 +46,16 @@ INSTALLED_APPS = [
     'mi_aplicacion',
     'mexcentrix_weberp',
     'g4br13l',
+    "whitenoise.runserver_nostatic",
 ]
+
+JAZZMIN_SETTINGS = {
+    "site_title": "Admin Dashboard Sis",
+    "site_header": "Mexcentrix Sistemas",
+    "site_logo": "logo.png",
+    "welcome_sign": "Bienvenido al panel de administración de la web",
+    "theme": "darkly",  # Temas: https://bootswatch.com/
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -51,6 +65,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # new
 ]
 
 ROOT_URLCONF = 'access_control.urls'
@@ -132,6 +147,16 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [
     BASE_DIR / "static",  # Puedes agregar más rutas si es necesario
 ]
+
+STATIC_ROOT = BASE_DIR / "staticfiles" 
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

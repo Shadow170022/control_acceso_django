@@ -62,14 +62,13 @@ def get_company3_connection(company_name):
     """
     # Lista de bases de datos permitidas
     valid_companies = [
-        "mxcenit_crm",
         "mxcenit_sicerp",
         "mxcenit_tbgerp",
         "mxcenit_tbgerp2",
     ]
     
     if company_name not in valid_companies:
-        company_name = "mxcenit_crm"  # Valor por defecto
+        company_name = "mxcenit_sicerp"  # Valor por defecto
 
     conn = pymysql.connect(
         host="mexcentrix.com",         # Servidor de base de datos
@@ -105,7 +104,6 @@ def get_domain_companies():
         "mxcenit": {
             "connection_func": get_company3_connection,
             "companies": {
-                "mxcenit_crm": "CRM",
                 "mxcenit_sicerp": "SIC",
                 "mxcenit_tbgerp": "TBG QRO",
                 "mxcenit_tbgerp2": "TBG MEX"

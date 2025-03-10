@@ -16,10 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from django.conf import settings
+from django.conf.urls.static import static
+from django.contrib.auth.decorators import permission_required
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('mi_aplicacion.urls')),
+    path('rh/', include('mi_aplicacion.urls')),
     path('mexcentrix/', include('mexcentrix_weberp.urls')),
     path('g4/', include('g4br13l.urls')),
 ]
+
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

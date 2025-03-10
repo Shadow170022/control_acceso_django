@@ -1,3 +1,7 @@
 from django.contrib import admin
+from .models import MexcentrixAccess
 
-# Register your models here.
+class MexcentrixAccessAdmin(admin.ModelAdmin):
+    pass
+
+admin.site.register(MexcentrixAccess, MexcentrixAccessAdmin)

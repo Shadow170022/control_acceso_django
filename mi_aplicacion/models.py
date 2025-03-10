@@ -25,3 +25,15 @@ class Empleado(models.Model):
         Used to display the employee's name and ID in a readable format.
         """
         return f"{self.user_name} - {self.id_empleado}"
+
+class PermissionsTest(models.Model):
+    # campos de ejemplo
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(blank=True, null=True)
+
+    class Meta:
+        permissions = [
+            ("is_finance", "Puede acceder al área de Finanzas"),
+            ("is_developer", "Puede acceder al área de Desarrollo"),
+            ("is_rh", "Puede acceder al área de Recursos Humanos"),
+        ]
