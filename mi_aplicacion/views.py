@@ -26,7 +26,7 @@ def login_view(request):
 
 def logout_view(request):
     logout(request)
-    return redirect('login')
+    return redirect('rh_login')
 
 @login_required(login_url='/rh/login/')
 @permission_required('mi_aplicacion.is_rh', login_url='/rh/login/', raise_exception=True)
