@@ -1,0 +1,144 @@
+{% extends 'rh_base.html' %}
+{% block title %}Reportes{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow-lg border-0 rounded-lg mt-4 fade-in">
+        <div class="card-header bg-primary text-white">
+            <h3 class="my-0 text-center">
+                <i class="bi bi-file-earmark-bar-graph me-2"></i>Employee Time Report
+            </h3>
+        </div>
+
+        <div class="card-body">
+            <!-- Formulario de filtros (igual que antes) -->
+            <form method="GET" class="mb-4">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-0">Employee name</label>
+                        <input type="text" name="nombre" class="form-control form-control-sm"
+                            placeholder="Search by name" value="{{ request.GET.nombre }}">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label small text-muted mb-0">Start date</label>
+                        <input type="date" name="start_date" class="form-control form-control-sm"
+                            value="{{ start_date }}">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label small text-muted mb-0">End date</label>
+                        <input type="date" name="end_date" class="form-control form-control-sm" value="{{ end_date }}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" name="agrupar_total"
+                                id="agrupar_total" {% if agrupar_total %}checked{% endif %}>
+                            <label class="form-check-label small" for="agrupar_total">
+                                Group total hours by employee
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            <i class="bi bi-search me-2"></i>Filter
+                        </button>
+                    </div>
+
+                    <div class="col-md-2">
+                        <a href="{% url 'export_employees_report' %}?{{ request.GET.urlencode }}"
+                            class="btn btn-success btn-sm w-100" title="Exportar a Excel">
+                            <i class="bi bi-file-earmark-excel me-2"></i>Export
+                        </a>
+                    </div>
+                </div>
+            </form>
+
+            {% if empleados %}
+            <!-- Contenedor para Handsontable -->
+            <div class="table-responsive">
+                <div id="hotContainer" class="hot ht-theme-main"></div>
+            </div>
+            {% else %}
+            <div class="alert alert-info mt-4 text-center">
+                <i class="bi bi-database-exclamation me-2"></i>No records found for the selected date range
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="card-footer bg-light">
+            <small class="text-muted">Last updated: {% now "DATETIME_FORMAT" %}</small>
+        </div>
+    </div>
+
+    <!-- Incluir los datos en formato JSON (usando el filtro json_script) -->
+    {{ empleados|json_script:"empleados-data" }}
+
+    <!-- Incluir Handsontable CSS y JS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@12.1.0/dist/handsontable.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/handsontable@12.1.0/dist/handsontable.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/ht-theme-horizon.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/styles/ht-theme-main.css" />
+
+    <script>
+        // Extraer los datos JSON que se generaron en el template
+        const empleadosData = JSON.parse(document.getElementById('empleados-data').textContent);
+
+        if (empleadosData && empleadosData.length > 0) {
+            const container = document.getElementById('hotContainer');
+            const hot = new Handsontable(container, {
+                data: empleadosData,
+                columns: [
+                    { data: 'id_empleado', title: 'ID' },
+                    { data: 'user_name', title: 'Employee' },
+                    { data: 'first_checkin', title: 'First Check-In' },
+                    { data: 'last_checkout', title: 'Last Check-Out' },
+                    { data: 'horas_trabajadas', title: 'Hours Worked' }
+                ],
+                width: '100%',
+                height: 'auto',
+                stretchH: 'all',
+                colHeaders: true,
+                rowHeaders: true,
+                customBorders: true,
+                licenseKey: 'non-commercial-and-evaluation',
+                filters: true,
+                dropdownMenu: ['filter_by_value', 'filter_action_bar'],
+                columnSorting: true,
+                licenseKey: 'non-commercial-and-evaluation',
+            });
+        }
+    </script>
+</div>
+
+<style>
+    .fade-in {
+        animation: fadeIn 0.5s ease-in;
+    }
+
+    .btn-export {
+        transition: all 0.3s ease;
+        background-color: #28a745 !important;
+        border-color: #28a745 !important;
+    }
+
+    .btn-export:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}

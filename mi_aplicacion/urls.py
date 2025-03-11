@@ -9,6 +9,8 @@ urlpatterns = [
     # Route for filtering employees based on a date range and optionally by name,
     # and grouping the total worked hours per employee
     path('empleados_por_fecha/', views.empleados_por_fecha, name='empleados_por_fecha'),
+    path('employees_view/', views.employees_view, name='employees_view'),
     path('login/', views.login_view, name='rh_login'),
     path('logout/', views.logout_view, name='rh_logout'),
+    path('employees/export/', views.export_employees_report, name='export_employees_report'),
 ]
