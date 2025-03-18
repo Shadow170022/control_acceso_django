@@ -91,54 +91,80 @@
             const hot = new Handsontable(container, {
                 data: empleadosData,
                 columns: [
-                    { data: 'id_empleado', title: 'ID' },
-                    { data: 'user_name', title: 'Employee' },
-                    { data: 'first_checkin', title: 'First Check-In' },
-                    { data: 'last_checkout', title: 'Last Check-Out' },
-                    { data: 'horas_trabajadas', title: 'Hours Worked' }
+                    { data: 'auth_date', title: 'Date', width: 100 },  // Nueva columna
+                    { data: 'id_empleado', title: 'ID', width: 80 },
+                    { data: 'user_name', title: 'Employee', width: 150 },
+                    { data: 'first_checkin', title: 'First Check-In', width: 120 },
+                    { data: 'last_checkout', title: 'Last Check-Out', width: 120 },
+                    {
+                        data: 'horas_trabajadas',
+                        title: 'Hours Worked',
+                        width: 120,
+                        renderer: function (instance, td, row, col, prop, value) {
+                            td.style.fontWeight = '600';
+                            td.style.color = '#2c7be5';
+                            Handsontable.renderers.TextRenderer.apply(this, arguments);
+                        }
+                    }
                 ],
                 width: '100%',
-                height: 'auto',
+                height: 'calc(100vh - 300px)',
                 stretchH: 'all',
                 colHeaders: true,
                 rowHeaders: true,
-                customBorders: true,
                 licenseKey: 'non-commercial-and-evaluation',
                 filters: true,
                 dropdownMenu: ['filter_by_value', 'filter_action_bar'],
-                columnSorting: true,
-                licenseKey: 'non-commercial-and-evaluation',
+                columnSorting: {
+                    indicator: true,
+                    sortEmptyCells: true
+                },
+                contextMenu: true,
+                manualColumnResize: true,
+                manualRowResize: true,
+                hiddenColumns: {
+                    indicators: true
+                },
+                autoWrapRow: true,
+                autoWrapCol: true,
+                language: 'en'
             });
+        
         }
     </script>
 </div>
 
 <style>
-    .fade-in {
-        animation: fadeIn 0.5s ease-in;
+    .hot {
+        border-radius: 0.5rem;
+        overflow: hidden;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
     }
 
-    .btn-export {
-        transition: all 0.3s ease;
-        background-color: #28a745 !important;
-        border-color: #28a745 !important;
+    .ht_master table {
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        font-size: 0.875rem;
     }
 
-    .btn-export:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+    .ht_master th {
+        background: #2c7be5 !important;
+        color: white !important;
+        font-weight: 600 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
     }
 
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
+    .ht_master td {
+        transition: background-color 0.2s ease;
+    }
 
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    .ht_master tr:hover td {
+        background-color: #f8f9fa !important;
+    }
+
+    .htFiltersMenu {
+        box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15);
+        border-radius: 0.5rem;
     }
 </style>
 {% endblock %}

@@ -1,0 +1,36 @@
+from mi_aplicacion import migrations
+
+def populate_companies(apps, schema_editor):
+    Company = apps.get_model('mi_aplicacion', 'Company')
+    domains_companies = {
+        "mxcxit": {
+            "mxcxit_htcerp": "HTC",
+            "mxcxit_mexxonerp": "MEXXON",
+            "mxcxit_rsserp": "RSS",
+            "mxcxit_ripmerp": "RIPM",
+            "mxcxit_spqerp": "SPQ"
+        },
+        "mexcx": {
+            "mexcx_asiaop": "ASIA OP",
+            "mexcx_daimayerp": "DAIMAY",
+            "mexcx_hmserp": "HMS"
+        },
+        "mxcenit": {
+            "mxcenit_sicerp": "SIC",
+            "mxcenit_tbgerp": "TBG QRO",
+            "mxcenit_tbgerp2": "TBG MEX"
+        }
+    }
+    
+    for domain, companies in domains_companies.items():
+        for code, name in companies.items():
+            Company.objects.get_or_create(code=code, name=name, domain=domain)
+
+class Migration(migrations.Migration):
+    dependencies = [
+        ('mi_aplicacion', 'previous_migration'),
+    ]
+
+    operations = [
+        migrations.RunPython(populate_companies),
+    ]

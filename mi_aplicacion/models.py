@@ -1,4 +1,20 @@
 from django.db import models
+from django.contrib.auth.models import User
+
+class Company(models.Model):
+    code = models.CharField(max_length=50, unique=True)
+    name = models.CharField(max_length=100)
+    domain = models.CharField(max_length=50)
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+
+class UserCompany(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('user', 'company')
 
 class Empleado(models.Model):
     """
@@ -27,7 +43,6 @@ class Empleado(models.Model):
         return f"{self.user_name} - {self.id_empleado}"
 
 class PermissionsTest(models.Model):
-    # campos de ejemplo
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField(blank=True, null=True)
 
@@ -36,4 +51,5 @@ class PermissionsTest(models.Model):
             ("is_finance", "Puede acceder al área de Finanzas"),
             ("is_developer", "Puede acceder al área de Desarrollo"),
             ("is_rh", "Puede acceder al área de Recursos Humanos"),
+            
         ]

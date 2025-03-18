@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import permission_required
+from mi_aplicacion.models import Company
 
 def login_view(request):
     if request.method == 'POST':
@@ -172,3 +173,12 @@ def api_empresas(request):
     empresas = dominios.get(dominio, {}).get('companies', {})
     print("Las empresas son:", empresas)
     return JsonResponse(empresas)
+
+def api_empresas_2(request):
+    dominio = request.GET.get('dominio')
+    empresas = Company.objects.filter(
+        domain=dominio,
+        usercompany__user=request.user
+    ).values('code', 'name')
+    
+    return JsonResponse({e['code']: e['name'] for e in empresas})

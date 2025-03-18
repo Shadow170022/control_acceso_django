@@ -178,42 +178,41 @@ def employees_view(request):
                 auth_date = empleado['auth_date']
                 auth_time = empleado['auth_time']
 
-                if (user_name, id_empleado) not in auth_totals:
-                    auth_totals[(user_name, id_empleado)] = {}
-
-                if auth_date not in auth_totals[(user_name, id_empleado)]:
-                    auth_totals[(user_name, id_empleado)][auth_date] = []
-
+                # Agrupamos por fecha y empleado
+                key = (auth_date, user_name, id_empleado)
+                
+                if key not in auth_totals:
+                    auth_totals[key] = []
+                
                 if auth_time:
-                    auth_totals[(user_name, id_empleado)][auth_date].append(auth_time)
+                    auth_totals[key].append(auth_time)
 
-            empleados = [
-                {
-                    'user_name': key[0],
-                    'id_empleado': key[1],
-                    'auth_dates': value,
-                    'total_horas_trabajadas': timedelta()
-                }
-                for key, value in auth_totals.items()
-            ]
-
-            for empleado in empleados:
-                for auth_date, auth_times in empleado['auth_dates'].items():
-                    auth_times.sort()
-                    first_checkin = auth_times[0]
-                    last_checkout = auth_times[-1]
-
-                    first_checkin_dt = datetime.combine(datetime.min, first_checkin)
-                    last_checkout_dt = datetime.combine(datetime.min, last_checkout)
-                    horas_trabajadas = last_checkout_dt - first_checkin_dt
-                    empleado['total_horas_trabajadas'] += horas_trabajadas
-
-            for empleado in empleados:
-                total_seconds = int(empleado['total_horas_trabajadas'].total_seconds())
-                horas_totales = total_seconds // 3600
-                minutos_totales = (total_seconds % 3600) // 60
-                segundos_totales = total_seconds % 60
-                empleado['total_horas_trabajadas'] = f"{horas_totales:02}:{minutos_totales:02}:{segundos_totales:02}"
+            empleados = []
+            for key, auth_times in auth_totals.items():
+                auth_date, user_name, id_empleado = key
+                auth_times.sort()
+                
+                first_checkin = auth_times[0]
+                last_checkout = auth_times[-1]
+                
+                # Cálculo de horas trabajadas
+                checkin_dt = datetime.combine(auth_date, first_checkin)
+                checkout_dt = datetime.combine(auth_date, last_checkout)
+                horas_trabajadas = checkout_dt - checkin_dt
+                
+                total_seconds = int(horas_trabajadas.total_seconds())
+                horas = total_seconds // 3600
+                minutos = (total_seconds % 3600) // 60
+                segundos = total_seconds % 60
+                
+                empleados.append({
+                    'auth_date': auth_date.strftime('%Y-%m-%d'),  # Nueva clave
+                    'user_name': user_name,
+                    'id_empleado': id_empleado,
+                    'first_checkin': first_checkin.strftime('%H:%M:%S'),
+                    'last_checkout': last_checkout.strftime('%H:%M:%S'),
+                    'horas_trabajadas': f"{horas:02}:{minutos:02}:{segundos:02}"
+                })
 
         else:
             empleados = empleados_queryset.values('user_name', 'id_empleado', 'auth_date').annotate(
