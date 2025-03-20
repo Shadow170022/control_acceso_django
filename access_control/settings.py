@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure--08gc1b_d5r6@wjhwpyr%mst0!ccw1-fb7$)jiznd)twh=$+r6
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.15.242', '192.168.15.0/24']
+ALLOWED_HOSTS = ['192.168.15.242', '192.168.15.0/24', 'localhost']
 
 LOGIN_URL = '/mexcentrix/login/'
 LOGIN_RH_URL = '/rh/login/'
