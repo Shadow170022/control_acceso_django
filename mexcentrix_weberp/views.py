@@ -98,6 +98,7 @@ def descargar_excel(request):
     conn = connection_func(company_name)
 
     periodo_seleccionado = request.GET.get('periodo', None)
+    periodo_tipo = request.GET.get('periodo_tipo', 'exact')
 
     with conn.cursor() as cursor:
         query = """
@@ -113,7 +114,10 @@ def descargar_excel(request):
 
         # Filtrar por período si se seleccionó uno
         if periodo_seleccionado:
-            query += f" AND g.periodno = {periodo_seleccionado}"
+            if periodo_tipo == 'exact':
+                query += f" AND g.periodno = {periodo_seleccionado}"
+            else:
+                query += f" AND g.periodno >= {periodo_seleccionado}"
 
         query += " ORDER BY s.supplierno, g.counterindex;"
         

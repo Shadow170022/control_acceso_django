@@ -38,6 +38,14 @@
                         <input type="month" id="fecha" class="form-control form-control-lg" disabled required>
                         <div class="form-text">Selecciona el mes y año para el reporte</div>
                     </div>
+                    <!-- Selector de tipo de período -->
+                    <div class="mb-4">
+                        <label for="periodo_tipo" class="form-label fw-bold">Rango del período:</label>
+                        <select id="periodo_tipo" class="form-select form-select-lg">
+                            <option value="exact">Este período</option>
+                            <option value="from">A partir de este período</option>
+                        </select>
+                    </div>
 
                     <div class="d-grid gap-2">
                         <button type="button" id="descargar" class="btn btn-success btn-lg" disabled>
@@ -178,6 +186,7 @@
 
         async function descargarReporte() {
             const periodo = periodos[inputFecha.value];
+            const periodoTipo = document.getElementById('periodo_tipo').value;
             if (!periodo) return mostrarError("Período no válido");
 
             const btnOriginal = botonDescargar.innerHTML;
@@ -191,7 +200,7 @@
 
             try {
                 const response = await fetch(
-                    `/mexcentrix/descargar_excel/?periodo=${periodo}&company=${empresaActual}&dominio=${dominioActual}`
+                    `/mexcentrix/descargar_excel/?periodo=${periodo}&company=${empresaActual}&dominio=${dominioActual}&periodo_tipo=${periodoTipo}`
                 );
 
                 if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
