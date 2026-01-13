@@ -51,5 +51,5 @@ class PermissionsTest(models.Model):
             ("is_finance", "Puede acceder al área de Finanzas"),
             ("is_developer", "Puede acceder al área de Desarrollo"),
             ("is_rh", "Puede acceder al área de Recursos Humanos"),
-            
+            ("is_trade", "Puede acceder al área de Comercio"),
         ]

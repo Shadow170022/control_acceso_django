@@ -155,6 +155,91 @@ def descargar_excel(request):
     return response
 
 
+@login_required
+@permission_required('mi_aplicacion.is_finance', login_url='/login/', raise_exception=True)
+def gltrans_report(request):
+    """ Vista para mostrar formulario y resultados de GLTrans """
+    dominios = get_domain_companies_serializable()
+    return render(request, 'gltrans_report.html', {'dominios': dominios.keys()})
+
+def api_gltrans_count(request):
+    """ Endpoint para obtener el conteo de GLTrans """
+    company_name = request.GET.get('company')
+    dominio = request.GET.get('dominio')
+    periodno = request.GET.get('period')
+    tag = request.GET.get('tag', None)
+    print("tag:", tag)
+
+    if not all([company_name, dominio, periodno]):
+        return JsonResponse({'error': 'Parámetros faltantes'}, status=400)
+
+    try:
+        dominio_data = get_domain_companies().get(dominio, {})
+        connection_func = dominio_data.get('connection_func', get_company_connection)
+        conn = connection_func(company_name)
+
+        query = "SELECT COUNT(*) as total FROM gltrans WHERE periodno = " + periodno
+
+        if tag:
+            query += " AND tag = " + tag
+
+        with conn.cursor() as cursor:
+            cursor.execute(query)
+            result = cursor.fetchone()
+            total = result['total'] if result else 0
+
+        print("La query es:", query)
+
+        return JsonResponse({
+            'total': total,
+            'gl_value': total/3
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+def api_tags(request):
+    print(request)
+    company = request.GET.get('company')
+    print("La empresa es:", company)
+    tags = {}
+    
+    if company == 'mxcxit_rsserp':
+        tags = {
+            '0': 'None',
+            '1': 'BD Medical',
+            '8': 'Capital',
+            '9': 'Linea 7',
+            '10': 'Cracker #3',
+            '11': 'SIC',
+            '12': 'RSS',
+            '13': 'SANOK'
+        }
+    elif company == 'mxcxit_ripmerp':
+        tags = {
+            '0': 'None',
+            '1': 'SPQ',
+            '2': 'BAE',
+            '3': 'RIM',
+            '4': 'SENKO',
+            '5': 'MEXXON',
+            '6': 'DAIMAY',
+            '7': 'DELAB',
+            '8': 'ANJI',
+            '9': 'ASIAWAY',
+            '10': 'CAMEL',
+            '11': 'POLESTAR',
+            '12': 'HTC',
+            '13': 'LER',
+            '16': 'SAIC',
+            '17': 'QUALUS',
+            '18': 'UNISON'
+        }
+    
+    return JsonResponse({'tags': tags})
 
 def get_domain_companies_serializable():
     dominios = get_domain_companies()  # diccionario completo
@@ -172,9 +257,24 @@ def api_empresas(request):
     """Endpoint para obtener empresas de un dominio específico"""
     dominio = request.GET.get('dominio')
     dominios = get_domain_companies_serializable()
+    usuario = request.user.username
     print(dominios)
+    print("El usuario es:", usuario)
     print("El dominio es:", dominio)
     empresas = dominios.get(dominio, {}).get('companies', {})
+    # Lógica de exclusión: Si no es finanzas, remover empresas
+    if usuario != 'finanzas':
+        empresas_a_ocultar = [
+            'mxcenit_jinerp',
+            'mxcenit_lererp',
+            'mxcenit_suzhouerp',
+            'mxcenit_tsperp',
+            'mexcx_mlogerp',
+            'mexcx_riaperp',
+            'mexcx_tongtaierp'
+            ]
+        for codigo in empresas_a_ocultar:
+            empresas.pop(codigo, None)  # Eliminar empresa si existe
     print("Las empresas son:", empresas)
     return JsonResponse(empresas)
 

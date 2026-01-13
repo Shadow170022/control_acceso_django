@@ -8,6 +8,9 @@ urlpatterns = [
     path('api/empresas/', login_required(views.api_empresas), name='api_empresas'),
     path('api/periodos/', login_required(views.api_periodos), name='api_periodos'),
     path('descargar_excel/', login_required(views.descargar_excel), name='descargar_excel'),
+    path('gl/', views.gltrans_report, name='gl'),
+    path('api/gltrans_count/', views.api_gltrans_count, name='api_gltrans_count'),
+    path('api/tags/', views.api_tags, name='api_tags'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
 ]

@@ -43,7 +43,10 @@ def get_company2_connection(company_name):
     valid_companies = [
         "mexcx_asiaop",
         "mexcx_daimayerp",
-        "mexcx_hmserp"
+        "mexcx_hmserp",
+        "mexcx_mlogerp",
+        "mexcx_riaperp",
+        "mexcx_tongtaierp"
     ]
     
     if company_name not in valid_companies:
@@ -65,6 +68,10 @@ def get_company3_connection(company_name):
         "mxcenit_sicerp",
         "mxcenit_tbgerp",
         "mxcenit_tbgerp2",
+        "mxcenit_jinerp",
+        "mxcenit_lererp",
+        "mxcenit_suzhouerp",
+        "mxcenit_tsperp"
     ]
     
     if company_name not in valid_companies:
@@ -98,7 +105,10 @@ def get_domain_companies():
             "companies": {
                 "mexcx_asiaop": "ASIA OP",
                 "mexcx_daimayerp": "DAIMAY",
-                "mexcx_hmserp": "HMS"
+                "mexcx_hmserp": "HMS",
+                "mexcx_mlogerp": "MLOG",
+                "mexcx_riaperp": "RIAP",
+                "mexcx_tongtaierp": "TONGTAI"
             }
         },
         "mxcenit": {
@@ -106,7 +116,11 @@ def get_domain_companies():
             "companies": {
                 "mxcenit_sicerp": "SIC",
                 "mxcenit_tbgerp": "TBG QRO",
-                "mxcenit_tbgerp2": "TBG MEX"
+                "mxcenit_tbgerp2": "TBG MEX",
+                "mxcenit_jinerp": "JIN",
+                "mxcenit_lererp": "LER",
+                "mxcenit_suzhouerp": "SUZHOU",
+                "mxcenit_tsperp": "TSP"
             }
         }
     }

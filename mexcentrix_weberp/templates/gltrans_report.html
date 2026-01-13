@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+{% block title %}Reporte GL{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="container mt-5">
+        <div class="card shadow-lg mx-auto" style="max-width: 600px;">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title mb-0">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Reporte GL
+                </h3>
+            </div>
+            {% if user.is_authenticated %}
+            <div class="card-body">
+                <form id="reportForm">
+                    <!-- Selector de dominio -->
+                    <div class="mb-4">
+                        <label for="dominio" class="form-label fw-bold">Dominio:</label>
+                        <select id="dominio" class="form-select form-select-lg" required>
+                            <option value="">-- Seleccione un dominio --</option>
+                            {% for dominio in dominios %}
+                            <option value="{{ dominio }}">{{ dominio }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Selector de empresa -->
+                    <div class="mb-4">
+                        <label for="company" class="form-label fw-bold">Empresa:</label>
+                        <select id="company" class="form-select form-select-lg" disabled required>
+                            <option value="">-- Seleccione un dominio primero --</option>
+                        </select>
+                    </div>
+
+                    <!-- Selector de período -->
+                    <div class="mb-4">
+                        <label for="fecha" class="form-label fw-bold">Período:</label>
+                        <input type="month" id="fecha" class="form-control form-control-lg" disabled required>
+                    </div>
+
+                    <!-- Selector de Tag -->
+                    <div class="mb-4" id="tagContainer" style="display: none;">
+                        <label for="tag" class="form-label fw-bold">Tag:</label>
+                        <select id="tag" class="form-select form-select-lg">
+                            <option value="">-- Sin tag --</option>
+                        </select>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="button" id="consultar" class="btn btn-primary btn-lg" disabled>
+                            <i class="bi bi-search me-2"></i>Consultar
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Resultados -->
+                <div id="resultado" class="mt-4" style="display: none;">
+                    <div class="alert alert-info">
+                        <h4 class="alert-heading">Resultado</h4>
+                        <p>Total de registros encontrados: <strong id="total">0</strong></p>
+                        <p>GL: <span id="total_gl"></span> / 3 = <strong id="gl_value">^.^</strong></p>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="card-body text-center">
+                <p class="card-text">Debes iniciar sesión para acceder</p>
+                <a href="/mexcentrix/login/" class="btn btn-primary">Iniciar Sesión</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        let periodos = {};
+        const selectDominio = document.getElementById("dominio");
+        const selectCompany = document.getElementById("company");
+        const inputFecha = document.getElementById("fecha");
+        const botonConsultar = document.getElementById("consultar");
+        const tagContainer = document.getElementById("tagContainer");
+        const tagSelect = document.getElementById("tag");
+        const username = "{{ request.user.username|escapejs }}";
+        const EMPRESAS_RESTRINGIDAS = {  // Lista de empresas a ocultar
+            'finanzas': [],  // Finanzas ve todo
+            /*ignorar en default:
+            "mxcenit_jinerp": "JIN",
+                "mxcenit_lererp": "LER",
+                "mxcenit_suzhouerp": "SUZHOU",
+                "mxcenit_tsperp": "TSP"
+                
+                "mexcx_mlogerp": "MLOG",
+                "mexcx_riaperp": "RIAP",
+                "mexcx_tongtaierp": "TONGTAI"*/
+            'default': [
+                'mxcenit_jinerp',
+                'mxcenit_lererp',
+                'mxcenit_suzhouerp',
+                'mxcenit_tsperp',
+                'mexcx_mlogerp',
+                'mexcx_riaperp',
+                'mexcx_tongtaierp'
+            ]
+        };
+
+        // Carga inicial de dominios
+        fetch('/mexcentrix/api/dominios/')
+            .then(response => response.json())
+            .then(data => {
+                selectDominio.disabled = false;
+            });
+
+        // Event listeners
+        selectDominio.addEventListener('change', cargarEmpresas);
+        selectCompany.addEventListener('change', cargarTagsYPeriodos);
+        inputFecha.addEventListener('change', actualizarBoton);
+        botonConsultar.addEventListener('click', consultarDatos);
+
+        async function cargarEmpresas() {
+            const dominio = selectDominio.value;
+            selectCompany.disabled = true;
+
+            tagSelect.value = null;
+
+            try {
+                const response = await fetch(`/mexcentrix/api/empresas/?dominio=${dominio}`);
+                const empresas = await response.json();
+
+                selectCompany.innerHTML = '<option value="">-- Seleccione empresa --</option>';
+                for (const [codigo, nombre] of Object.entries(empresas)) {
+                    // Ocultar empresas según usuario
+                    const empresasOcultas = username === 'finanzas'
+                        ? EMPRESAS_RESTRINGIDAS.finanzas
+                        : EMPRESAS_RESTRINGIDAS.default;
+
+                    if (empresasOcultas.includes(codigo)) continue; // Saltar empresas restringidas
+                    selectCompany.innerHTML += `<option value="${codigo}">${nombre}</option>`;
+                }
+                selectCompany.disabled = false;
+
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        async function cargarTagsYPeriodos() {
+            const empresa = selectCompany.value;
+            tagContainer.style.display = 'none';
+            tagSelect.value = null;
+
+            // Cargar tags si corresponde
+            if (empresa === 'mxcxit_rsserp' || empresa === 'mxcxit_ripmerp') {
+                try {
+                    const response = await fetch(`/mexcentrix/api/tags/?company=${empresa}`);
+                    const data = await response.json();
+
+                    tagSelect.innerHTML = '<option value="">-- Sin tag --</option>';
+                    for (const [valor, etiqueta] of Object.entries(data.tags)) {
+                        tagSelect.innerHTML += `<option value="${valor}">${etiqueta}</option>`;
+                    }
+                    tagContainer.style.display = 'block';
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+
+            // Cargar periodos
+            await cargarPeriodos();
+        }
+
+        async function cargarPeriodos() {
+            const empresa = selectCompany.value;
+            const dominio = selectDominio.value;
+            inputFecha.disabled = true;
+
+            try {
+                const response = await fetch(`/mexcentrix/api/periodos/?company=${empresa}&dominio=${dominio}`);
+                const data = await response.json();
+                periodos = data.periodos;
+                inputFecha.disabled = false;
+
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function actualizarBoton() {
+            botonConsultar.disabled = !periodos[inputFecha.value];
+        }
+
+        async function consultarDatos() {
+            const empresa = selectCompany.value;
+            const dominio = selectDominio.value;
+            const periodo = periodos[inputFecha.value];
+            const tag = tagSelect.value;
+
+            if (!empresa || !periodo) return;
+
+            botonConsultar.innerHTML = `
+                <span class="spinner-border spinner-border-sm"></span> Consultando...
+            `;
+            botonConsultar.disabled = true;
+
+            try {
+                const url = `/mexcentrix/api/gltrans_count/?company=${empresa}&dominio=${dominio}&period=${periodo}&tag=${tag}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.error) throw new Error(data.error);
+
+                document.getElementById('total').textContent = data.total;
+                document.getElementById('gl_value').textContent = data.gl_value;
+                document.getElementById('total_gl').textContent = data.total;
+                document.getElementById('resultado').style.display = 'block';
+
+            } catch (error) {
+                console.error(error);
+                alert(error.message);
+            } finally {
+                botonConsultar.innerHTML = `<i class="bi bi-search me-2"></i>Consultar`;
+                botonConsultar.disabled = false;
+            }
+        }
+    </script>
+</div>
+{% endblock %}
